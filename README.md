@@ -6,6 +6,16 @@
 
 [**Download the latest APK**](https://github.com/Sridhar1030/SnapFade/releases/latest) — under 500 KB, Android 11+
 
+## Screens
+
+<p align="center">
+  <img src="assets/demo.gif" width="240" alt="Take a screenshot: it is copied to the clipboard, a Save / Share popup appears, and the shot shows up in the app with its countdown">
+</p>
+
+| Setup | Ready | Popup |
+|:-:|:-:|:-:|
+| <img src="assets/setup.png" width="240" alt="Setup screen with Turn on, Allow display over other apps, Allow all files access"> | <img src="assets/ready.png" width="240" alt="Ready screen with auto-delete picker and captured screenshots list"> | <img src="assets/popup.png" width="240" alt="Copied popup with Save and Share at the bottom right"> |
+
 ## Why
 
 Every screenshot you take gets saved permanently. Most are throwaway: a quick share, a reference, a one-time paste. SnapFade makes screenshots ephemeral by default and permanent only when you choose.
