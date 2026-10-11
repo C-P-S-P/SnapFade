@@ -11,8 +11,20 @@ android {
         applicationId = "app.snapfade"
         minSdk = 30 // AccessibilityService.takeScreenshot() needs API 30
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1"
+        versionCode = 2
+        versionName = "0.2"
+    }
+
+    signingConfigs {
+        create("release") {
+            val props = rootProject.file("local.properties").let { f ->
+                java.util.Properties().apply { if (f.exists()) f.inputStream().use { load(it) } }
+            }
+            storeFile = file(props.getProperty("RELEASE_STORE_FILE", "../release.keystore"))
+            storePassword = props.getProperty("RELEASE_STORE_PASSWORD", "")
+            keyAlias = props.getProperty("RELEASE_KEY_ALIAS", "")
+            keyPassword = props.getProperty("RELEASE_KEY_PASSWORD", "")
+        }
     }
 
     buildTypes {
@@ -20,6 +32,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             isMinifyEnabled = true
