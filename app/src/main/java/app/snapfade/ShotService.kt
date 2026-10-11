@@ -17,6 +17,7 @@ import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import java.io.File
 
@@ -88,6 +89,8 @@ class ShotService : AccessibilityService() {
         val view = LayoutInflater.from(this).inflate(R.layout.overlay_shot, null)
         val thumb = BitmapFactory.decodeFile(file.path, BitmapFactory.Options().apply { inSampleSize = 4 })
         view.findViewById<ImageView>(R.id.thumb).setImageBitmap(thumb)
+        view.findViewById<TextView>(R.id.label).text =
+            getString(R.string.copied, Shots.ttlLabel(Shots.getTtlHours(this)))
         view.findViewById<View>(R.id.save).setOnClickListener {
             saveToGallery(file)
             toast(getString(R.string.saved))

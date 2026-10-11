@@ -18,30 +18,40 @@ import androidx.work.workDataOf
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-/** The cached screenshots: one file each, expiry = file mtime + 6 h. */
 object Shots {
     const val CLIP_LABEL = "SnapFade"
     const val KEY_PATH = "path"
-    val TTL_MS: Long = TimeUnit.HOURS.toMillis(6)
+    private const val PREFS = "snapfade"
+    private const val KEY_TTL = "ttl_hours"
+    const val DEFAULT_TTL_HOURS = 6
+    val EXPIRY_OPTIONS = intArrayOf(1, 3, 6, 12, 24)
+
+    fun ttlMs(ctx: Context): Long = TimeUnit.HOURS.toMillis(getTtlHours(ctx).toLong())
+
+    fun getTtlHours(ctx: Context): Int =
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt(KEY_TTL, DEFAULT_TTL_HOURS)
+
+    fun setTtlHours(ctx: Context, hours: Int) =
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(KEY_TTL, hours).apply()
+
+    fun ttlLabel(hours: Int): String = if (hours == 1) "1 hour" else "$hours hours"
 
     fun dir(ctx: Context): File = File(ctx.cacheDir, "shots").apply { mkdirs() }
 
     fun all(ctx: Context): List<File> =
         dir(ctx).listFiles()?.filter { it.isFile }?.sortedByDescending { it.lastModified() } ?: emptyList()
 
-    fun msLeft(f: File): Long = f.lastModified() + TTL_MS - System.currentTimeMillis()
+    fun msLeft(ctx: Context, f: File): Long = f.lastModified() + ttlMs(ctx) - System.currentTimeMillis()
 
-    /** Delete anything past its 6 h. Called on open, on capture and from the worker. */
-    fun sweep(ctx: Context) = all(ctx).filter { msLeft(it) <= 0 }.forEach { it.delete() }
+    fun sweep(ctx: Context) = all(ctx).filter { msLeft(ctx, it) <= 0 }.forEach { it.delete() }
 
     fun timeLeft(ctx: Context, f: File): String {
-        val m = (msLeft(f) / 60_000).coerceAtLeast(0)
+        val m = (msLeft(ctx, f) / 60_000).coerceAtLeast(0)
         return ctx.getString(R.string.time_left, m / 60, m % 60)
     }
 
     fun uri(ctx: Context, f: File): Uri = FileProvider.getUriForFile(ctx, "${ctx.packageName}.files", f)
 
-    /** Delete now. Also clears the clipboard if this shot is what's on it (readable: we're foreground). */
     fun remove(ctx: Context, f: File) {
         val cm = ctx.getSystemService(ClipboardManager::class.java)
         if (cm.primaryClip?.getItemAt(0)?.uri == uri(ctx, f)) cm.clearPrimaryClip()
@@ -51,24 +61,33 @@ object Shots {
 
     fun copyToClipboard(ctx: Context, f: File) {
         val uri = uri(ctx, f)
-        for (p in listOf("com.android.systemui", "android")) { // let the system clipboard preview read it
+        for (p in listOf("com.android.systemui", "android")) {
             runCatching { ctx.grantUriPermission(p, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
         }
         ctx.getSystemService(ClipboardManager::class.java)
             .setPrimaryClip(ClipData.newUri(ctx.contentResolver, CLIP_LABEL, uri))
     }
 
+    fun share(ctx: Context, f: File) {
+        val uri = uri(ctx, f)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(f.extension) ?: "image/png"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        ctx.startActivity(Intent.createChooser(intent, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
     fun scheduleExpiry(ctx: Context, f: File) {
         WorkManager.getInstance(ctx).enqueueUniqueWork(
             f.name, ExistingWorkPolicy.REPLACE,
             OneTimeWorkRequestBuilder<ExpireWorker>()
-                .setInitialDelay(TTL_MS, TimeUnit.MILLISECONDS)
+                .setInitialDelay(ttlMs(ctx), TimeUnit.MILLISECONDS)
                 .setInputData(workDataOf(KEY_PATH to f.path))
                 .build()
         )
     }
 
-    /** Insert into Pictures/Screenshots. No storage permission needed for our own inserts. */
     fun saveToGallery(ctx: Context, f: File) {
         val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(f.extension) ?: "image/png"
         val values = ContentValues().apply {

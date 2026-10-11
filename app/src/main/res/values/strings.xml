@@ -6,7 +6,9 @@
     <string name="status_no_files">Step 2: allow "All files access" so SnapFade can remove screenshots from the gallery.</string>
     <string name="open_settings">Open Accessibility settings</string>
     <string name="open_files">Allow All files access</string>
-    <string name="copied">Copied to clipboard · gone in 6 h</string>
+    <string name="copied">Copied to clipboard · gone in %1$s</string>
+    <string name="share">Share</string>
+    <string name="expiry_label">Auto-delete after:</string>
     <string name="copied_again">Copied to clipboard</string>
     <string name="tap_to_copy">Tap to copy again</string>
     <string name="time_left">%1$dh %2$dm left</string>

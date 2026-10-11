@@ -14,10 +14,12 @@ import android.os.Looper
 import android.provider.Settings
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.ListView
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import java.io.File
@@ -48,6 +50,24 @@ class MainActivity : Activity() {
         findViewById<ListView>(R.id.list).setOnItemClickListener { parent, _, pos, _ ->
             Shots.copyToClipboard(this, parent.getItemAtPosition(pos) as File)
             Toast.makeText(this, R.string.copied_again, Toast.LENGTH_SHORT).show()
+        }
+        setupExpirySpinner()
+    }
+
+    private fun setupExpirySpinner() {
+        val spinner = findViewById<Spinner>(R.id.expiry)
+        val labels = Shots.EXPIRY_OPTIONS.map { Shots.ttlLabel(it) }
+        spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, labels).apply {
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
+        val current = Shots.getTtlHours(this)
+        val idx = Shots.EXPIRY_OPTIONS.indexOf(current)
+        if (idx >= 0) spinner.setSelection(idx)
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
+                Shots.setTtlHours(this@MainActivity, Shots.EXPIRY_OPTIONS[pos])
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
     }
 
@@ -102,8 +122,11 @@ class MainActivity : Activity() {
                 Shots.saveToGallery(context, f)
                 Toast.makeText(context, R.string.saved, Toast.LENGTH_SHORT).show()
             }
+            row.findViewById<View>(R.id.share).setOnClickListener {
+                Shots.share(context, f)
+            }
             row.findViewById<View>(R.id.delete).setOnClickListener {
-                Shots.remove(context, f) // FileObserver in the activity refreshes the list
+                Shots.remove(context, f)
             }
             return row
         }
