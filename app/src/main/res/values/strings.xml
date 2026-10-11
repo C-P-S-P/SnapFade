@@ -5,6 +5,8 @@
     <string name="status_no_a11y">Step 1: enable SnapFade under Accessibility.</string>
     <string name="status_no_files">Step 2: allow "All files access" so SnapFade can remove screenshots from the gallery.</string>
     <string name="open_settings">Open Accessibility settings</string>
+    <string name="allow_restricted">Allow restricted settings first</string>
+    <string name="status_restricted">Step 1: allow restricted settings for SnapFade, then enable accessibility.</string>
     <string name="open_files">Allow All files access</string>
     <string name="copied">Copied to clipboard · gone in %1$s</string>
     <string name="copied_short">Copied</string>

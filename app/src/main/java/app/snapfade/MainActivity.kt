@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.FileObserver
@@ -39,6 +40,9 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        findViewById<Button>(R.id.restricted).setOnClickListener {
+            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+        }
         findViewById<Button>(R.id.settings).setOnClickListener {
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
@@ -94,6 +98,8 @@ class MainActivity : Activity() {
                 else -> R.string.status_no_files
             }
         )
+        val showRestricted = !a11y && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+        findViewById<View>(R.id.restricted).visibility = if (showRestricted) View.VISIBLE else View.GONE
         findViewById<View>(R.id.settings).visibility = if (a11y) View.GONE else View.VISIBLE
         findViewById<View>(R.id.files).visibility = if (files) View.GONE else View.VISIBLE
 
