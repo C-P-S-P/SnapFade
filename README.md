@@ -1,19 +1,19 @@
-# tempSS
+# SnapFade
 
 **Temporary screenshots for Android.** Take screenshots the normal way (Power + Volume Down) and they go to your clipboard instead of cluttering your gallery. They self-destruct after 6 hours unless you save them.
 
 ## Why
 
-Every screenshot you take gets saved permanently. Most are throwaway: a quick share, a reference, a one-time paste. tempSS makes screenshots ephemeral by default and permanent only when you choose.
+Every screenshot you take gets saved permanently. Most are throwaway: a quick share, a reference, a one-time paste. SnapFade makes screenshots ephemeral by default and permanent only when you choose.
 
 ## How it works
 
 ```
-Power+VolDown → system screenshot → tempSS intercepts → clipboard + auto-delete in 6h
+Power+VolDown → system screenshot → SnapFade intercepts → clipboard + auto-delete in 6h
 ```
 
 1. You take a screenshot as usual. The system writes it to `Pictures/Screenshots`.
-2. tempSS (a resident accessibility service watching MediaStore) copies it to its private cache, puts it on the clipboard as an image, and **deletes the gallery copy** within ~1 second.
+2. SnapFade (a resident accessibility service watching MediaStore) copies it to its private cache, puts it on the clipboard as an image, and **deletes the gallery copy** within ~1 second.
 3. A popup appears at the top of the screen with **Save** / dismiss (auto-dismisses in 6s).
    - **Save** writes it back to `Pictures/Screenshots` permanently.
    - Otherwise a WorkManager job deletes the cached file after 6 hours.
@@ -30,8 +30,8 @@ Power+VolDown → system screenshot → tempSS intercepts → clipboard + auto-d
 
 ## Setup
 
-1. Install the APK and open tempSS.
-2. **Enable the accessibility service:** Settings > Accessibility > tempSS.
+1. Install the APK and open SnapFade.
+2. **Enable the accessibility service:** Settings > Accessibility > SnapFade.
    - On Android 13+ sideloads: if the toggle is greyed out, go to App Info > ... > **Allow restricted settings** first.
 3. **Grant "All files access":** needed to delete screenshots from the gallery without a confirmation dialog each time.
 
@@ -48,8 +48,8 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 # Enable service via adb (skips restricted settings block)
-adb shell settings put secure enabled_accessibility_services app.tempss/app.tempss.ShotService
-adb shell appops set app.tempss MANAGE_EXTERNAL_STORAGE allow
+adb shell settings put secure enabled_accessibility_services app.snapfade/app.snapfade.ShotService
+adb shell appops set app.snapfade MANAGE_EXTERNAL_STORAGE allow
 ```
 
 **minSdk 30** (Android 11). Tested on vivo V2303 (Android 15, Funtouch 15).

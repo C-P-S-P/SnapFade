@@ -1,4 +1,4 @@
-package app.tempss
+package app.snapfade
 
 import android.accessibilityservice.AccessibilityService
 import android.content.ContentUris

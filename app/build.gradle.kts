@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "app.tempss"
+    namespace = "app.snapfade"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "app.tempss"
+        applicationId = "app.snapfade"
         minSdk = 30 // AccessibilityService.takeScreenshot() needs API 30
         targetSdk = 35
         versionCode = 1
@@ -16,7 +16,16 @@ android {
     }
 
     buildTypes {
-        release { isMinifyEnabled = false }
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        debug {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
     }
 
     compileOptions {

@@ -1,4 +1,4 @@
-package app.tempss
+package app.snapfade
 
 import android.app.Activity
 import android.content.ComponentName

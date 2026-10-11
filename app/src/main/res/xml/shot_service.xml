@@ -4,4 +4,4 @@
     android:accessibilityFeedbackType="feedbackGeneric"
     android:description="@string/service_desc"
     android:notificationTimeout="100"
-    android:settingsActivity="app.tempss.MainActivity" />
+    android:settingsActivity="app.snapfade.MainActivity" />

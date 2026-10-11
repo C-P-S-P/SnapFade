@@ -1,4 +1,4 @@
-package app.tempss
+package app.snapfade
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 
 /** The cached screenshots: one file each, expiry = file mtime + 6 h. */
 object Shots {
-    const val CLIP_LABEL = "tempSS"
+    const val CLIP_LABEL = "SnapFade"
     const val KEY_PATH = "path"
     val TTL_MS: Long = TimeUnit.HOURS.toMillis(6)
 

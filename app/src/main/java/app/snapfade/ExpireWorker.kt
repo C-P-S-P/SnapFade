@@ -1,4 +1,4 @@
-package app.tempss
+package app.snapfade
 
 import android.content.ClipboardManager
 import android.content.Context
