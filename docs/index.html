@@ -4,31 +4,32 @@
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
   :root {
-    --bg: #ffffff;
-    --fg: #0a0a0a;
-    --muted: #666666;
-    --border: #e0e0e0;
-    --accent: #0a0a0a;
-    --font-display: 'Space Grotesk', system-ui, sans-serif;
-    --font-mono: 'IBM Plex Mono', monospace;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #0a0a0a;
-      --fg: #f0f0f0;
-      --muted: #999999;
-      --border: #222222;
-      --accent: #f0f0f0;
-      color-scheme: dark;
-    }
-  }
-  :root[data-theme="dark"] {
     --bg: #0a0a0a;
     --fg: #f0f0f0;
     --muted: #999999;
     --border: #222222;
     --accent: #f0f0f0;
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
     color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #ffffff;
+      --fg: #0a0a0a;
+      --muted: #666666;
+      --border: #e0e0e0;
+      --accent: #0a0a0a;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #ffffff;
+    --fg: #0a0a0a;
+    --muted: #666666;
+    --border: #e0e0e0;
+    --accent: #0a0a0a;
+    color-scheme: light;
   }
 
   body {
@@ -230,9 +231,26 @@
     text-decoration: none;
   }
   footer a:hover { color: var(--fg); }
+
+  .theme-toggle {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    background: var(--border);
+    border: none;
+    color: var(--fg);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 6px 12px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    z-index: 10;
+  }
+  .theme-toggle:hover { opacity: 0.7; }
 </style>
 
 <div class="wrap">
+  <button class="theme-toggle" onclick="toggleTheme()">light</button>
   <div class="logo">SnapFade</div>
 
   <h1>Screenshots that disappear.</h1>
@@ -297,3 +315,21 @@
     <a href="https://github.com/Sridhar1030/SnapFade">GitHub</a>
   </footer>
 </div>
+
+<script>
+  function toggleTheme() {
+    const root = document.documentElement;
+    const current = root.getAttribute('data-theme');
+    const next = current === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', next);
+    document.querySelector('.theme-toggle').textContent = next === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem('theme', next); } catch(e) {}
+  }
+  try {
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+      document.querySelector('.theme-toggle').textContent = saved === 'dark' ? 'light' : 'dark';
+    }
+  } catch(e) {}
+</script>

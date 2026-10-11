@@ -10,23 +10,14 @@
 
 Every screenshot you take gets saved permanently. Most are throwaway: a quick share, a reference, a one-time paste. SnapFade makes screenshots ephemeral by default and permanent only when you choose.
 
-## How it works
+## Features
 
-```
-Power+VolDown → system screenshot → SnapFade intercepts → clipboard + auto-delete
-```
-
-1. You take a screenshot as usual. The system writes it to `Pictures/Screenshots`.
-2. SnapFade (a resident accessibility service watching MediaStore) copies it to its private cache, puts it on the clipboard as an image, and **deletes the gallery copy** within ~1 second.
-3. A minimal popup appears: **Copied | Save | X** (auto-dismisses in 6s).
-   - **Save** writes it back to `Pictures/Screenshots` permanently.
-   - Otherwise it auto-deletes after your chosen expiry time.
-4. The app's main screen lists every shot still alive with a countdown timer. Per row:
-   - **Tap** to copy it to clipboard again
-   - **Share** to open the system share sheet
-   - **Save** to write it to the gallery
-   - **Trash** to delete it immediately
-5. **Custom expiry:** choose 1h / 3h / 6h / 12h / 24h from the main screen.
+- **Default shortcut** — uses Power + Volume Down, no new gesture
+- **Clipboard first** — screenshot goes straight to clipboard, gallery stays clean
+- **Save popup** — tap Save to keep it permanently, or let it fade
+- **Custom expiry** — auto-deletes after 1h / 3h / 6h / 12h / 24h
+- **Share** — share directly from the app
+- **In-app history** — see all screenshots with countdown timers, copy again, save, or delete
 
 ## Setup
 
