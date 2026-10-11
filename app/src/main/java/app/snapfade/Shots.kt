@@ -6,10 +6,12 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore.Images.Media
 import android.provider.MediaStore.VOLUME_EXTERNAL_PRIMARY
 import android.webkit.MimeTypeMap
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -69,6 +71,13 @@ object Shots {
         }
         ctx.getSystemService(ClipboardManager::class.java)
             .setPrimaryClip(ClipData.newUri(ctx.contentResolver, CLIP_LABEL, uri))
+    }
+
+    /** Android 13+ shows its own "Copied" chip on setPrimaryClip; only toast below that. */
+    fun toastCopied(ctx: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            Toast.makeText(ctx, R.string.copied, Toast.LENGTH_SHORT).show()
+        }
     }
 
     fun share(ctx: Context, f: File) {

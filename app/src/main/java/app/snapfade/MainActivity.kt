@@ -61,7 +61,7 @@ class MainActivity : Activity() {
         }
         findViewById<ListView>(R.id.list).setOnItemClickListener { parent, _, pos, _ ->
             Shots.copyToClipboard(this, parent.getItemAtPosition(pos) as File)
-            Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
+            Shots.toastCopied(this)
         }
         setupExpiry()
     }

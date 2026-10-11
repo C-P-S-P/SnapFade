@@ -63,8 +63,10 @@ class ShotService : Service() {
 
     private fun notification(): Notification {
         val nm = getSystemService(NotificationManager::class.java)
+        nm.deleteNotificationChannel("service") // v0.3 pre-release channel at IMPORTANCE_LOW
+        // MIN: no status-bar icon, collapsed into the shade's silent section
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL, getString(R.string.notif_channel), NotificationManager.IMPORTANCE_LOW)
+            NotificationChannel(CHANNEL, getString(R.string.notif_channel), NotificationManager.IMPORTANCE_MIN)
         )
         val open = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
@@ -109,7 +111,7 @@ class ShotService : Service() {
 
     private fun showOverlay(file: File) {
         removeOverlay()
-        if (!Settings.canDrawOverlays(this)) return toast(getString(R.string.copied))
+        if (!Settings.canDrawOverlays(this)) return Shots.toastCopied(this)
 
         val view = LayoutInflater.from(this).inflate(R.layout.overlay_shot, null)
         view.findViewById<View>(R.id.save).setOnClickListener {
@@ -136,7 +138,7 @@ class ShotService : Service() {
             x = (OVERLAY_END_DP * d).toInt()
             y = (OVERLAY_BOTTOM_DP * d).toInt()
         }
-        if (runCatching { wm.addView(view, lp) }.isFailure) return toast(getString(R.string.copied))
+        if (runCatching { wm.addView(view, lp) }.isFailure) return Shots.toastCopied(this)
         overlay = view
         handler.postDelayed(dismissRunnable, OVERLAY_MS)
     }
@@ -159,7 +161,7 @@ class ShotService : Service() {
         const val OVERLAY_MS = 6_000L
         const val OVERLAY_BOTTOM_DP = 110
         const val OVERLAY_END_DP = 16
-        private const val CHANNEL = "service"
+        private const val CHANNEL = "quiet"
         private const val NOTIF_ID = 1
 
         @Volatile var running = false

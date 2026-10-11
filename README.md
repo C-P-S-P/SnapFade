@@ -22,7 +22,7 @@ Every screenshot you take gets saved permanently. Most are throwaway: a quick sh
 ## Setup
 
 1. Install the APK and open SnapFade.
-2. Tap **Turn on**. This starts a small foreground service (one silent notification).
+2. Tap **Turn on**. This starts a small foreground service. Its notification is on a minimum-importance channel: no status-bar icon, no sound, hidden or collapsed into the shade's silent section depending on the OEM.
 3. **Allow display over other apps:** for the Copied / Save popup. Without it you still get a toast.
 4. **Grant "All files access":** needed to delete screenshots from the gallery without a confirmation dialog each time.
 
@@ -70,7 +70,7 @@ MainActivity           → ListView of cached shots, live-refreshing via FileObs
 ## Design decisions
 
 - **MediaStore observer, not screenshot API:** Android doesn't let apps intercept Power+VolDown. The accessibility screenshot API (`takeScreenshot()`) requires a separate trigger. Watching MediaStore catches the result of the normal combo with ~1s latency.
-- **Foreground service, not AccessibilityService:** v0.1–0.2 used an accessibility service to stay resident and draw the popup. That meant the Accessibility toggle plus the Android 13+ "restricted settings" hoop for sideloads. A `specialUse` foreground service with `SYSTEM_ALERT_WINDOW` does the same job with a plain "Turn on" button; the cost is one silent ongoing notification.
+- **Foreground service, not AccessibilityService:** v0.1–0.2 used an accessibility service to stay resident and draw the popup. That meant the Accessibility toggle plus the Android 13+ "restricted settings" hoop for sideloads. A `specialUse` foreground service with `SYSTEM_ALERT_WINDOW` does the same job with a plain "Turn on" button; the cost is one minimum-importance ongoing notification that most launchers don't even show.
 - **`MANAGE_EXTERNAL_STORAGE`:** required to delete other apps' screenshots without per-file confirmation. Fine for sideloading; Google Play would reject this.
 - **Per-file WorkManager jobs:** each screenshot gets its own timer. More precise than a single periodic sweep.
 - **Overlay bottom-right:** pill ~110dp above the bottom edge, right-aligned, where the thumb already is. OEM screenshot previews (vivo, Pixel, Samsung) occupy the bottom-left, so the right side stays clear. `ShotService.OVERLAY_BOTTOM_DP` / `OVERLAY_END_DP` are the knobs.
