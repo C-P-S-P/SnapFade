@@ -1,6 +1,10 @@
 # SnapFade
 
-**Temporary screenshots for Android.** Take screenshots the normal way (Power + Volume Down) and they go to your clipboard instead of cluttering your gallery. They self-destruct after 6 hours unless you save them.
+**Temporary screenshots for Android.** Take screenshots the normal way (Power + Volume Down) and they go to your clipboard instead of cluttering your gallery. They self-destruct automatically unless you save them.
+
+## Download
+
+[**SnapFade v0.1 APK**](https://github.com/Sridhar1030/SnapFade/releases/latest) — 2.2MB, Android 11+
 
 ## Why
 
@@ -9,24 +13,20 @@ Every screenshot you take gets saved permanently. Most are throwaway: a quick sh
 ## How it works
 
 ```
-Power+VolDown → system screenshot → SnapFade intercepts → clipboard + auto-delete in 6h
+Power+VolDown → system screenshot → SnapFade intercepts → clipboard + auto-delete
 ```
 
 1. You take a screenshot as usual. The system writes it to `Pictures/Screenshots`.
 2. SnapFade (a resident accessibility service watching MediaStore) copies it to its private cache, puts it on the clipboard as an image, and **deletes the gallery copy** within ~1 second.
-3. A popup appears at the top of the screen with **Save** / dismiss (auto-dismisses in 6s).
+3. A minimal popup appears: **Copied | Save | X** (auto-dismisses in 6s).
    - **Save** writes it back to `Pictures/Screenshots` permanently.
-   - Otherwise a WorkManager job deletes the cached file after 6 hours.
+   - Otherwise it auto-deletes after your chosen expiry time.
 4. The app's main screen lists every shot still alive with a countdown timer. Per row:
    - **Tap** to copy it to clipboard again
+   - **Share** to open the system share sheet
    - **Save** to write it to the gallery
    - **Trash** to delete it immediately
-
-## Screenshots
-
-| Main screen | Overlay popup |
-|:-----------:|:-------------:|
-| List of cached shots with countdown timers | Save or dismiss after capture |
+5. **Custom expiry:** choose 1h / 3h / 6h / 12h / 24h from the main screen.
 
 ## Setup
 
@@ -64,12 +64,13 @@ ShotService (AccessibilityService)
 
 Shots (object)
 ├── copyToClipboard()  → FileProvider URI + grantUriPermission to systemui
-├── scheduleExpiry()   → WorkManager OneTimeWorkRequest per file
+├── share()            → ACTION_SEND intent with image URI
+├── scheduleExpiry()   → WorkManager OneTimeWorkRequest per file (configurable TTL)
 ├── saveToGallery()    → MediaStore insert with IS_PENDING pattern
 ├── remove()           → delete + cancel worker + clear clipboard
 └── sweep()            → delete all expired shots
 
-ExpireWorker           → per-file worker, fires 6h after capture
+ExpireWorker           → per-file worker, fires after configured expiry
 MainActivity           → ListView of cached shots, live-refreshing via FileObserver
 ```
 
@@ -78,15 +79,16 @@ MainActivity           → ListView of cached shots, live-refreshing via FileObs
 - **MediaStore observer, not screenshot API:** Android doesn't let apps intercept Power+VolDown. The accessibility screenshot API (`takeScreenshot()`) requires a separate trigger. Watching MediaStore catches the result of the normal combo with ~1s latency.
 - **AccessibilityService as host:** keeps the process alive and provides `TYPE_ACCESSIBILITY_OVERLAY` window token (no `SYSTEM_ALERT_WINDOW` permission needed).
 - **`MANAGE_EXTERNAL_STORAGE`:** required to delete other apps' screenshots without per-file confirmation. Fine for sideloading; Google Play would reject this.
-- **Per-file WorkManager jobs:** each screenshot gets its own 6h timer. More precise than a single periodic sweep.
+- **Per-file WorkManager jobs:** each screenshot gets its own timer. More precise than a single periodic sweep.
 - **Overlay at screen top:** Vivo (and some other OEMs) show their own screenshot preview at the bottom.
+- **R8 minification:** shrinks APK from 7.4MB to 2.2MB by stripping unused AndroidX classes.
 
 ## Limitations
 
 - Sideload only. `MANAGE_EXTERNAL_STORAGE` won't pass Play Store review for this use case.
 - Detection matches `RELATIVE_PATH LIKE '%Screenshot%'` or filenames starting with `Screenshot`. Covers stock Android, Samsung, Xiaomi, vivo. May need tuning for unusual OEMs.
 - Pasting works in apps that accept image content (Gmail, WhatsApp, Telegram, Slack, Keep). Plain text fields ignore it.
-- Background apps can't read the clipboard on Android 10+, so after 6h the clip entry may still appear but the backing file is gone.
+- Background apps can't read the clipboard on Android 10+, so after expiry the clip entry may still appear but the backing file is gone.
 
 ## License
 
