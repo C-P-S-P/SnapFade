@@ -4,37 +4,35 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:padding="10dp"
+    android:paddingHorizontal="14dp"
+    android:paddingVertical="8dp"
     android:background="@drawable/overlay_bg"
     android:elevation="8dp">
 
-    <ImageView
-        android:id="@+id/thumb"
-        android:layout_width="48dp"
-        android:layout_height="80dp"
-        android:scaleType="centerCrop"
-        android:contentDescription="@string/copied" />
-
     <TextView
         android:id="@+id/label"
-        android:layout_width="140dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
         android:textColor="#FFFFFF"
         android:textSize="14sp"
-        android:text="@string/copied" />
+        android:text="@string/copied_short" />
 
     <Button
         android:id="@+id/save"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="6dp"
-        android:text="@string/save" />
+        android:layout_height="36dp"
+        android:layout_marginStart="12dp"
+        android:text="@string/save"
+        android:textSize="13sp"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:paddingHorizontal="12dp" />
 
     <ImageButton
         android:id="@+id/dismiss"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginStart="4dp"
         android:background="?android:attr/selectableItemBackgroundBorderless"
         android:src="@android:drawable/ic_menu_close_clear_cancel"
         android:contentDescription="@string/dismiss" />

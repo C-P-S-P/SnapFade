@@ -7,6 +7,7 @@
     <string name="open_settings">Open Accessibility settings</string>
     <string name="open_files">Allow All files access</string>
     <string name="copied">Copied to clipboard · gone in %1$s</string>
+    <string name="copied_short">Copied</string>
     <string name="share">Share</string>
     <string name="expiry_label">Auto-delete after:</string>
     <string name="copied_again">Copied to clipboard</string>

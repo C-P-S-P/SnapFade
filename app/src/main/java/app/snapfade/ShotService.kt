@@ -3,7 +3,6 @@ package app.snapfade
 import android.accessibilityservice.AccessibilityService
 import android.content.ContentUris
 import android.database.ContentObserver
-import android.graphics.BitmapFactory
 import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Environment
@@ -16,8 +15,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
-import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
 import java.io.File
 
@@ -87,10 +84,6 @@ class ShotService : AccessibilityService() {
     private fun showOverlay(file: File) {
         removeOverlay()
         val view = LayoutInflater.from(this).inflate(R.layout.overlay_shot, null)
-        val thumb = BitmapFactory.decodeFile(file.path, BitmapFactory.Options().apply { inSampleSize = 4 })
-        view.findViewById<ImageView>(R.id.thumb).setImageBitmap(thumb)
-        view.findViewById<TextView>(R.id.label).text =
-            getString(R.string.copied, Shots.ttlLabel(Shots.getTtlHours(this)))
         view.findViewById<View>(R.id.save).setOnClickListener {
             saveToGallery(file)
             toast(getString(R.string.saved))
@@ -105,8 +98,8 @@ class ShotService : AccessibilityService() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         ).apply {
-            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL // top: clear of OEM screenshot previews
-            y = 200
+            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+            y = 120
         }
         // ponytail: after a quick disable/enable of the service the overlay token can be null;
         // don't take the whole process down, the shot is still in the in-app list.
