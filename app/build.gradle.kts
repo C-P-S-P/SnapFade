@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -9,16 +11,16 @@ android {
 
     defaultConfig {
         applicationId = "app.snapfade"
-        minSdk = 30 // AccessibilityService.takeScreenshot() needs API 30
+        minSdk = 30 // MANAGE_EXTERNAL_STORAGE / isExternalStorageManager() need API 30
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.2"
+        versionCode = 3
+        versionName = "0.3"
     }
 
     signingConfigs {
         create("release") {
             val props = rootProject.file("local.properties").let { f ->
-                java.util.Properties().apply { if (f.exists()) f.inputStream().use { load(it) } }
+                Properties().apply { if (f.exists()) f.inputStream().use { load(it) } }
             }
             storeFile = file(props.getProperty("RELEASE_STORE_FILE", "../release.keystore"))
             storePassword = props.getProperty("RELEASE_STORE_PASSWORD", "")

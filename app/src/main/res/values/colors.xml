@@ -1,0 +1,7 @@
+<resources>
+    <color name="bg">#FFFFFF</color>
+    <color name="fg">#0A0A0A</color>
+    <color name="muted">#666666</color>
+    <color name="border">#E0E0E0</color>
+    <color name="surface">#F2F2F2</color>
+</resources>

@@ -1,2 +1,3 @@
 -keep class app.snapfade.ExpireWorker { *; }
 -keep class app.snapfade.ShotService { *; }
+-keep class app.snapfade.BootReceiver { *; }

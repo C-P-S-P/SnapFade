@@ -1,35 +1,41 @@
 package app.snapfade
 
-import android.accessibilityservice.AccessibilityService
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
 import android.content.ContentUris
+import android.content.Context
+import android.content.Intent
 import android.database.ContentObserver
 import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Environment
 import android.os.Handler
+import android.os.IBinder
 import android.os.Looper
 import android.provider.MediaStore.Images.Media
 import android.provider.MediaStore.VOLUME_EXTERNAL_PRIMARY
+import android.provider.Settings
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
-import android.view.accessibility.AccessibilityEvent
 import android.widget.Toast
 import java.io.File
 
 /**
- * Lives as an accessibility service only to stay resident and to draw an overlay.
- * Watches MediaStore: when the system screenshot (Power+VolDown) lands, copies it to
- * the app cache, puts it on the clipboard, deletes it from the gallery, shows Save popup.
+ * Foreground service that watches MediaStore: when the system screenshot lands, copies it to
+ * the app cache, puts it on the clipboard, deletes it from the gallery, shows the Save popup.
  */
-class ShotService : AccessibilityService() {
+class ShotService : Service() {
 
     private val handler = Handler(Looper.getMainLooper())
     private var overlay: View? = null
     private var lastId = -1L
     private var savedName: String? = null
-    private lateinit var wm: WindowManager
+    private val wm by lazy { getSystemService(WindowManager::class.java) }
     private val images: Uri = Media.getContentUri(VOLUME_EXTERNAL_PRIMARY)
     private val dismissRunnable = Runnable { removeOverlay() }
 
@@ -37,20 +43,40 @@ class ShotService : AccessibilityService() {
         override fun onChange(selfChange: Boolean, uri: Uri?) = onMediaChanged()
     }
 
-    override fun onServiceConnected() {
-        // Must be fetched after connect: AccessibilityService attaches its overlay token on first lookup.
-        wm = getSystemService(WindowManager::class.java)
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        startForeground(NOTIF_ID, notification())
         contentResolver.registerContentObserver(images, true, observer)
+        running = true
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int) = START_STICKY
+
     override fun onDestroy() {
+        running = false
         contentResolver.unregisterContentObserver(observer)
         removeOverlay()
         super.onDestroy()
     }
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent) {}
-    override fun onInterrupt() {}
+    private fun notification(): Notification {
+        val nm = getSystemService(NotificationManager::class.java)
+        nm.createNotificationChannel(
+            NotificationChannel(CHANNEL, getString(R.string.notif_channel), NotificationManager.IMPORTANCE_LOW)
+        )
+        val open = PendingIntent.getActivity(
+            this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
+        )
+        return Notification.Builder(this, CHANNEL)
+            .setSmallIcon(R.drawable.ic_notif)
+            .setContentTitle(getString(R.string.app_name))
+            .setContentText(getString(R.string.notif_text))
+            .setContentIntent(open)
+            .setOngoing(true)
+            .build()
+    }
 
     private fun onMediaChanged() {
         if (!Environment.isExternalStorageManager()) return // need All files access to delete
@@ -83,10 +109,16 @@ class ShotService : AccessibilityService() {
 
     private fun showOverlay(file: File) {
         removeOverlay()
+        if (!Settings.canDrawOverlays(this)) return toast(getString(R.string.copied))
+
         val view = LayoutInflater.from(this).inflate(R.layout.overlay_shot, null)
         view.findViewById<View>(R.id.save).setOnClickListener {
             saveToGallery(file)
             toast(getString(R.string.saved))
+            removeOverlay()
+        }
+        view.findViewById<View>(R.id.share).setOnClickListener {
+            Shots.share(this, file)
             removeOverlay()
         }
         view.findViewById<View>(R.id.dismiss).setOnClickListener { removeOverlay() }
@@ -94,15 +126,16 @@ class ShotService : AccessibilityService() {
         val lp = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY, // no SYSTEM_ALERT_WINDOW needed
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         ).apply {
-            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-            y = 120
+            // bottom-right: OEM screenshot previews (vivo, Pixel, Samsung) sit bottom-left
+            gravity = Gravity.BOTTOM or Gravity.END
+            val d = resources.displayMetrics.density
+            x = (OVERLAY_END_DP * d).toInt()
+            y = (OVERLAY_BOTTOM_DP * d).toInt()
         }
-        // ponytail: after a quick disable/enable of the service the overlay token can be null;
-        // don't take the whole process down, the shot is still in the in-app list.
         if (runCatching { wm.addView(view, lp) }.isFailure) return toast(getString(R.string.copied))
         overlay = view
         handler.postDelayed(dismissRunnable, OVERLAY_MS)
@@ -124,5 +157,15 @@ class ShotService : AccessibilityService() {
 
     companion object {
         const val OVERLAY_MS = 6_000L
+        const val OVERLAY_BOTTOM_DP = 110
+        const val OVERLAY_END_DP = 16
+        private const val CHANNEL = "service"
+        private const val NOTIF_ID = 1
+
+        @Volatile var running = false
+            private set
+
+        fun start(ctx: Context) = ctx.startForegroundService(Intent(ctx, ShotService::class.java))
+        fun stop(ctx: Context) = ctx.stopService(Intent(ctx, ShotService::class.java))
     }
 }

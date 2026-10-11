@@ -4,7 +4,7 @@
 
 ## Download
 
-[**SnapFade v0.1 APK**](https://github.com/Sridhar1030/SnapFade/releases/latest) — 2.2MB, Android 11+
+[**Download the latest APK**](https://github.com/Sridhar1030/SnapFade/releases/latest) — under 500 KB, Android 11+
 
 ## Why
 
@@ -22,11 +22,11 @@ Every screenshot you take gets saved permanently. Most are throwaway: a quick sh
 ## Setup
 
 1. Install the APK and open SnapFade.
-2. **Enable the accessibility service:** Settings > Accessibility > SnapFade.
-   - On Android 13+ sideloads: if the toggle is greyed out, go to App Info > ... > **Allow restricted settings** first.
-3. **Grant "All files access":** needed to delete screenshots from the gallery without a confirmation dialog each time.
+2. Tap **Turn on**. This starts a small foreground service (one silent notification).
+3. **Allow display over other apps:** for the Copied / Save popup. Without it you still get a toast.
+4. **Grant "All files access":** needed to delete screenshots from the gallery without a confirmation dialog each time.
 
-The main screen shows which permissions are still missing.
+No accessibility service, no "restricted settings" dance. The main screen shows which steps are still missing, and the service restarts itself after a reboot.
 
 ## Build
 
@@ -38,8 +38,8 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 # Install on connected device
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 
-# Enable service via adb (skips restricted settings block)
-adb shell settings put secure enabled_accessibility_services app.snapfade/app.snapfade.ShotService
+# Grant permissions via adb (skips the Settings round-trips)
+adb shell appops set app.snapfade SYSTEM_ALERT_WINDOW allow
 adb shell appops set app.snapfade MANAGE_EXTERNAL_STORAGE allow
 ```
 
@@ -48,10 +48,12 @@ adb shell appops set app.snapfade MANAGE_EXTERNAL_STORAGE allow
 ## Architecture
 
 ```
-ShotService (AccessibilityService)
+ShotService (foreground Service, specialUse)
 ├── ContentObserver on MediaStore  → detects new screenshots
 ├── grab()                         → cache file, delete gallery copy, clipboard, schedule expiry
-└── showOverlay()                  → TYPE_ACCESSIBILITY_OVERLAY popup (Save / dismiss)
+└── showOverlay()                  → TYPE_APPLICATION_OVERLAY popup at the bottom (Save / Share / dismiss)
+
+BootReceiver           → restarts ShotService after reboot if the user turned it on
 
 Shots (object)
 ├── copyToClipboard()  → FileProvider URI + grantUriPermission to systemui
@@ -68,11 +70,11 @@ MainActivity           → ListView of cached shots, live-refreshing via FileObs
 ## Design decisions
 
 - **MediaStore observer, not screenshot API:** Android doesn't let apps intercept Power+VolDown. The accessibility screenshot API (`takeScreenshot()`) requires a separate trigger. Watching MediaStore catches the result of the normal combo with ~1s latency.
-- **AccessibilityService as host:** keeps the process alive and provides `TYPE_ACCESSIBILITY_OVERLAY` window token (no `SYSTEM_ALERT_WINDOW` permission needed).
+- **Foreground service, not AccessibilityService:** v0.1–0.2 used an accessibility service to stay resident and draw the popup. That meant the Accessibility toggle plus the Android 13+ "restricted settings" hoop for sideloads. A `specialUse` foreground service with `SYSTEM_ALERT_WINDOW` does the same job with a plain "Turn on" button; the cost is one silent ongoing notification.
 - **`MANAGE_EXTERNAL_STORAGE`:** required to delete other apps' screenshots without per-file confirmation. Fine for sideloading; Google Play would reject this.
 - **Per-file WorkManager jobs:** each screenshot gets its own timer. More precise than a single periodic sweep.
-- **Overlay at screen top:** Vivo (and some other OEMs) show their own screenshot preview at the bottom.
-- **R8 minification:** shrinks APK from 7.4MB to 2.2MB by stripping unused AndroidX classes.
+- **Overlay bottom-right:** pill ~110dp above the bottom edge, right-aligned, where the thumb already is. OEM screenshot previews (vivo, Pixel, Samsung) occupy the bottom-left, so the right side stays clear. `ShotService.OVERLAY_BOTTOM_DP` / `OVERLAY_END_DP` are the knobs.
+- **R8 minification:** shrinks the APK from 7.4MB to under 500KB by stripping unused AndroidX classes.
 
 ## Limitations
 

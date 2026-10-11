@@ -23,18 +23,21 @@ object Shots {
     const val KEY_PATH = "path"
     private const val PREFS = "snapfade"
     private const val KEY_TTL = "ttl_hours"
+    private const val KEY_ENABLED = "enabled"
     const val DEFAULT_TTL_HOURS = 6
     val EXPIRY_OPTIONS = intArrayOf(1, 3, 6, 12, 24)
 
+    private fun prefs(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
     fun ttlMs(ctx: Context): Long = TimeUnit.HOURS.toMillis(getTtlHours(ctx).toLong())
 
-    fun getTtlHours(ctx: Context): Int =
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt(KEY_TTL, DEFAULT_TTL_HOURS)
+    fun getTtlHours(ctx: Context): Int = prefs(ctx).getInt(KEY_TTL, DEFAULT_TTL_HOURS)
 
-    fun setTtlHours(ctx: Context, hours: Int) =
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(KEY_TTL, hours).apply()
+    fun setTtlHours(ctx: Context, hours: Int) = prefs(ctx).edit().putInt(KEY_TTL, hours).apply()
 
-    fun ttlLabel(hours: Int): String = if (hours == 1) "1 hour" else "$hours hours"
+    fun isEnabled(ctx: Context): Boolean = prefs(ctx).getBoolean(KEY_ENABLED, false)
+
+    fun setEnabled(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean(KEY_ENABLED, on).apply()
 
     fun dir(ctx: Context): File = File(ctx.cacheDir, "shots").apply { mkdirs() }
 

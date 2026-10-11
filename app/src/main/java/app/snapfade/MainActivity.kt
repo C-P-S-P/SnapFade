@@ -1,7 +1,7 @@
 package app.snapfade
 
+import android.Manifest
 import android.app.Activity
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -15,12 +15,11 @@ import android.os.Looper
 import android.provider.Settings
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.ListView
-import android.widget.Spinner
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import java.io.File
@@ -40,38 +39,40 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        findViewById<Button>(R.id.restricted).setOnClickListener {
-            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+
+        findViewById<View>(R.id.enable).setOnClickListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
+            }
+            Shots.setEnabled(this, true)
+            ShotService.start(this)
+            handler.postDelayed(::refresh, 300)
         }
-        findViewById<Button>(R.id.settings).setOnClickListener {
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        findViewById<View>(R.id.disable).setOnClickListener {
+            Shots.setEnabled(this, false)
+            ShotService.stop(this)
+            handler.postDelayed(::refresh, 300)
         }
-        findViewById<Button>(R.id.files).setOnClickListener {
-            startActivity(
-                Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:$packageName"))
-            )
+        findViewById<View>(R.id.overlay).setOnClickListener {
+            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+        }
+        findViewById<View>(R.id.files).setOnClickListener {
+            startActivity(Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:$packageName")))
         }
         findViewById<ListView>(R.id.list).setOnItemClickListener { parent, _, pos, _ ->
             Shots.copyToClipboard(this, parent.getItemAtPosition(pos) as File)
-            Toast.makeText(this, R.string.copied_again, Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
         }
-        setupExpirySpinner()
+        setupExpiry()
     }
 
-    private fun setupExpirySpinner() {
-        val spinner = findViewById<Spinner>(R.id.expiry)
-        val labels = Shots.EXPIRY_OPTIONS.map { Shots.ttlLabel(it) }
-        spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, labels).apply {
-            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        }
-        val current = Shots.getTtlHours(this)
-        val idx = Shots.EXPIRY_OPTIONS.indexOf(current)
-        if (idx >= 0) spinner.setSelection(idx)
-        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, pos: Int, id: Long) {
-                Shots.setTtlHours(this@MainActivity, Shots.EXPIRY_OPTIONS[pos])
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
+    private fun setupExpiry() {
+        val group = findViewById<RadioGroup>(R.id.expiry)
+        Shots.EXPIRY_OPTIONS.forEachIndexed { i, h -> (group.getChildAt(i) as RadioButton).text = "${h}h" }
+        val idx = Shots.EXPIRY_OPTIONS.indexOf(Shots.getTtlHours(this))
+        if (idx >= 0) (group.getChildAt(idx) as RadioButton).isChecked = true
+        group.setOnCheckedChangeListener { g, id ->
+            Shots.setTtlHours(this, Shots.EXPIRY_OPTIONS[g.indexOfChild(g.findViewById(id))])
         }
     }
 
@@ -88,31 +89,28 @@ class MainActivity : Activity() {
     }
 
     private fun refresh() {
-        val a11y = serviceEnabled()
+        val running = ShotService.running
+        val overlay = Settings.canDrawOverlays(this)
         val files = Environment.isExternalStorageManager()
-        val ready = a11y && files
-        findViewById<TextView>(R.id.status).setText(
+        val ready = running && files
+
+        findViewById<TextView>(R.id.status).setText(if (ready) R.string.status_ready else R.string.status_setup)
+        findViewById<TextView>(R.id.hint).setText(
             when {
-                ready -> R.string.status_on
-                !a11y -> R.string.status_no_a11y
-                else -> R.string.status_no_files
+                !ready -> R.string.hint_setup
+                !overlay -> R.string.hint_no_overlay
+                else -> R.string.hint_ready
             }
         )
-        val showRestricted = !a11y && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-        findViewById<View>(R.id.restricted).visibility = if (showRestricted) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.settings).visibility = if (a11y) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.enable).visibility = if (running) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.disable).visibility = if (running) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.overlay).visibility = if (overlay) View.GONE else View.VISIBLE
         findViewById<View>(R.id.files).visibility = if (files) View.GONE else View.VISIBLE
 
         Shots.sweep(this)
         val shots = Shots.all(this)
         findViewById<View>(R.id.empty).visibility = if (shots.isEmpty()) View.VISIBLE else View.GONE
         findViewById<ListView>(R.id.list).adapter = ShotAdapter(this, shots)
-    }
-
-    private fun serviceEnabled(): Boolean {
-        val me = ComponentName(this, ShotService::class.java).flattenToString()
-        val enabled = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: ""
-        return enabled.split(':').any { ComponentName.unflattenFromString(it)?.flattenToString() == me }
     }
 
     private class ShotAdapter(ctx: Context, shots: List<File>) : ArrayAdapter<File>(ctx, 0, shots) {
@@ -122,18 +120,13 @@ class MainActivity : Activity() {
             row.findViewById<ImageView>(R.id.thumb).setImageBitmap(
                 BitmapFactory.decodeFile(f.path, BitmapFactory.Options().apply { inSampleSize = 8 })
             )
-            row.findViewById<TextView>(R.id.name).text = f.name
             row.findViewById<TextView>(R.id.left).text = Shots.timeLeft(context, f)
             row.findViewById<View>(R.id.save).setOnClickListener {
                 Shots.saveToGallery(context, f)
                 Toast.makeText(context, R.string.saved, Toast.LENGTH_SHORT).show()
             }
-            row.findViewById<View>(R.id.share).setOnClickListener {
-                Shots.share(context, f)
-            }
-            row.findViewById<View>(R.id.delete).setOnClickListener {
-                Shots.remove(context, f)
-            }
+            row.findViewById<View>(R.id.share).setOnClickListener { Shots.share(context, f) }
+            row.findViewById<View>(R.id.delete).setOnClickListener { Shots.remove(context, f) }
             return row
         }
     }
