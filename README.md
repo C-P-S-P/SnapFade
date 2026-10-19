@@ -4,7 +4,7 @@
 
 ## Download
 
-[**Download the latest APK**](https://github.com/Sridhar1030/SnapFade/releases/latest) — under 500 KB, Android 11+
+[**Download the latest APK**](https://github.com/C-P-S-P/SnapFade/releases/latest) — under 500 KB, Android 11+
 
 ## Screens
 
