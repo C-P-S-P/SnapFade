@@ -1,0 +1,1 @@
+Screenshots go to the clipboard, not the gallery, and expire on a timer

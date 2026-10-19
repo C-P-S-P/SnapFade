@@ -1,0 +1,20 @@
+Most screenshots are throwaway: a quick share, a reference, a one-time paste. SnapFade makes them temporary by default and permanent only when you choose.
+
+Take a screenshot the normal way. SnapFade moves it out of your gallery into its own private cache and puts it on the clipboard, so you can paste it straight into any app that accepts images. A small popup offers Save and Share. If you do nothing, the screenshot is deleted after the time you pick (1, 3, 6, 12 or 24 hours) and the clipboard entry goes dead with it.
+
+<b>How it works</b>
+<ul>
+<li>Uses the default screenshot shortcut. No new gesture to learn.</li>
+<li>Watches the media store for new screenshots and removes them from the gallery.</li>
+<li>The clipboard holds a content URI; the image lives in the app's private cache until it expires.</li>
+<li>Every pending screenshot is listed in the app with a countdown. Copy again, save, share or delete from there.</li>
+</ul>
+
+<b>Permissions</b>
+<ul>
+<li>All files access: to delete the original from the gallery without a prompt each time.</li>
+<li>Display over other apps: for the Save / Share popup. Optional.</li>
+<li>A quiet foreground service keeps it running; its notification is silent and minimised.</li>
+</ul>
+
+No ads, no analytics, no internet permission. Under 500 KB.

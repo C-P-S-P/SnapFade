@@ -1,0 +1,6 @@
+First F-Droid release.
+
+- No accessibility service any more: a plain Turn on button starts a quiet foreground service
+- Save / Share popup at the bottom right, clear of the system's own screenshot preview
+- Black and white UI, visible icons, segmented expiry picker
+- Service restarts after reboot and after app updates

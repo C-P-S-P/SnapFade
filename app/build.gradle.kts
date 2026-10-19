@@ -13,8 +13,8 @@ android {
         applicationId = "app.snapfade"
         minSdk = 30 // MANAGE_EXTERNAL_STORAGE / isExternalStorageManager() need API 30
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.3"
+        versionCode = 4
+        versionName = "0.4"
     }
 
     signingConfigs {
@@ -34,7 +34,8 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.getByName("release")
+            // F-Droid builds without a keystore; it verifies the unsigned output against the GitHub release
+            signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile?.exists() == true }
         }
         debug {
             isMinifyEnabled = true
