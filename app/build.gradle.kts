@@ -36,6 +36,7 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             // F-Droid builds without a keystore; it verifies the unsigned output against the GitHub release
             signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile?.exists() == true }
+            vcsInfo.include = false // embedded git metadata would break reproducible builds
         }
         debug {
             isMinifyEnabled = true
