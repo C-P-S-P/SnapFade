@@ -46,6 +46,12 @@ android {
         }
     }
 
+    dependenciesInfo {
+        // Play-only encrypted blob in the APK signing block; F-Droid's scanner rejects it
+        includeInApk = false
+        includeInBundle = false
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
