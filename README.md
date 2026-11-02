@@ -26,8 +26,9 @@ Every screenshot you take gets saved permanently. Most are throwaway: a quick sh
 - **Clipboard first** — screenshot goes straight to clipboard, gallery stays clean
 - **Save popup** — tap Save to keep it permanently, or let it fade
 - **Custom expiry** — auto-deletes after 1h / 3h / 6h / 12h / 24h
+- **Edit** — crop or mark up in your image editor before it fades
 - **Share** — share directly from the app
-- **In-app history** — see all screenshots with countdown timers, copy again, save, or delete
+- **In-app history** — see all screenshots with countdown timers, copy again, save, edit, share, or delete
 
 ## Setup
 
@@ -61,13 +62,14 @@ adb shell appops set app.snapfade MANAGE_EXTERNAL_STORAGE allow
 ShotService (foreground Service, specialUse)
 ├── ContentObserver on MediaStore  → detects new screenshots
 ├── grab()                         → cache file, delete gallery copy, clipboard, schedule expiry
-└── showOverlay()                  → TYPE_APPLICATION_OVERLAY popup at the bottom (Save / Share / dismiss)
+└── showOverlay()                  → TYPE_APPLICATION_OVERLAY popup at the bottom (Save / Edit / Share / dismiss)
 
 BootReceiver           → restarts ShotService after reboot if the user turned it on
 
 Shots (object)
 ├── copyToClipboard()  → FileProvider URI + grantUriPermission to systemui
 ├── share()            → ACTION_SEND intent with image URI
+├── edit()             → ACTION_EDIT intent, read-only URI grant; the editor saves a new file
 ├── scheduleExpiry()   → WorkManager OneTimeWorkRequest per file (configurable TTL)
 ├── saveToGallery()    → MediaStore insert with IS_PENDING pattern
 ├── remove()           → delete + cancel worker + clear clipboard
@@ -84,6 +86,7 @@ MainActivity           → ListView of cached shots, live-refreshing via FileObs
 - **`MANAGE_EXTERNAL_STORAGE`:** required to delete other apps' screenshots without per-file confirmation. Fine for sideloading; Google Play would reject this.
 - **Per-file WorkManager jobs:** each screenshot gets its own timer. More precise than a single periodic sweep.
 - **Overlay bottom-right:** pill ~110dp above the bottom edge, right-aligned, where the thumb already is. OEM screenshot previews (vivo, Pixel, Samsung) occupy the bottom-left, so the right side stays clear. `ShotService.OVERLAY_BOTTOM_DP` / `OVERLAY_END_DP` are the knobs.
+- **Edit hands out a read-only URI:** Pixel Markup truncates a writable FileProvider file on open (0 bytes, blank canvas), so editors never get write access to the cached shot. They save a new file instead; if its name starts with `Screenshot` the observer catches it and it becomes the new temporary shot (same name replaces the original).
 - **R8 minification:** shrinks the APK from 7.4MB to under 500KB by stripping unused AndroidX classes.
 
 ## Limitations

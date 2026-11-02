@@ -46,9 +46,15 @@
         android:text="@string/save" />
 
     <ImageButton
-        android:id="@+id/share"
+        android:id="@+id/edit"
         style="@style/IconBtn"
         android:layout_marginStart="4dp"
+        android:contentDescription="@string/edit"
+        android:src="@drawable/ic_edit" />
+
+    <ImageButton
+        android:id="@+id/share"
+        style="@style/IconBtn"
         android:contentDescription="@string/share"
         android:src="@drawable/ic_share" />
 

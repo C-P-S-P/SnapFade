@@ -125,6 +125,7 @@ class MainActivity : Activity() {
                 Shots.saveToGallery(context, f)
                 Toast.makeText(context, R.string.saved, Toast.LENGTH_SHORT).show()
             }
+            row.findViewById<View>(R.id.edit).setOnClickListener { Shots.edit(context, f) }
             row.findViewById<View>(R.id.share).setOnClickListener { Shots.share(context, f) }
             row.findViewById<View>(R.id.delete).setOnClickListener { Shots.remove(context, f) }
             return row

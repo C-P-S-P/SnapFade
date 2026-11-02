@@ -119,6 +119,10 @@ class ShotService : Service() {
             toast(getString(R.string.saved))
             removeOverlay()
         }
+        view.findViewById<View>(R.id.edit).setOnClickListener {
+            Shots.edit(this, file)
+            removeOverlay()
+        }
         view.findViewById<View>(R.id.share).setOnClickListener {
             Shots.share(this, file)
             removeOverlay()

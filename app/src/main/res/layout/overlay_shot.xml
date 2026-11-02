@@ -36,9 +36,16 @@
         android:textSize="13sp" />
 
     <ImageButton
-        android:id="@+id/share"
+        android:id="@+id/edit"
         style="@style/IconBtn"
         android:layout_marginStart="2dp"
+        android:contentDescription="@string/edit"
+        android:src="@drawable/ic_edit"
+        android:tint="#F0F0F0" />
+
+    <ImageButton
+        android:id="@+id/share"
+        style="@style/IconBtn"
         android:contentDescription="@string/share"
         android:src="@drawable/ic_share"
         android:tint="#F0F0F0" />
