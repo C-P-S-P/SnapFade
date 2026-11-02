@@ -80,11 +80,28 @@ object Shots {
         }
     }
 
+    private fun mime(f: File): String =
+        MimeTypeMap.getSingleton().getMimeTypeFromExtension(f.extension) ?: "image/png"
+
     fun share(ctx: Context, f: File) {
-        val uri = uri(ctx, f)
         val intent = Intent(Intent.ACTION_SEND).apply {
-            type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(f.extension) ?: "image/png"
-            putExtra(Intent.EXTRA_STREAM, uri)
+            type = mime(f)
+            putExtra(Intent.EXTRA_STREAM, uri(ctx, f))
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        ctx.startActivity(Intent.createChooser(intent, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
+    /**
+     * Opens the shot in an image editor (crop, markup). The gallery copy is gone by now, so the
+     * OEM screenshot preview's own Edit button has nothing to open; this is the replacement.
+     * Read-only grant on purpose: with write access Pixel Markup truncates the file on open
+     * (0 bytes, blank canvas). Editors save their result as a new gallery file instead; if it
+     * lands in the Screenshots folder the observer picks it up as a fresh temporary shot.
+     */
+    fun edit(ctx: Context, f: File) {
+        val intent = Intent(Intent.ACTION_EDIT).apply {
+            setDataAndType(uri(ctx, f), mime(f))
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         ctx.startActivity(Intent.createChooser(intent, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -101,10 +118,9 @@ object Shots {
     }
 
     fun saveToGallery(ctx: Context, f: File) {
-        val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(f.extension) ?: "image/png"
         val values = ContentValues().apply {
             put(Media.DISPLAY_NAME, f.name)
-            put(Media.MIME_TYPE, mime)
+            put(Media.MIME_TYPE, mime(f))
             put(Media.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/Screenshots")
             put(Media.IS_PENDING, 1)
         }

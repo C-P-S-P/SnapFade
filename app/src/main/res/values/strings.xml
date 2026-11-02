@@ -14,6 +14,7 @@
     <string name="copied">Copied to clipboard</string>
     <string name="copied_short">Copied</string>
     <string name="share">Share</string>
+    <string name="edit">Edit</string>
     <string name="expiry_label">Auto-delete after</string>
     <string name="tap_to_copy">Tap to copy again</string>
     <string name="time_left">%1$dh %2$dm left</string>
