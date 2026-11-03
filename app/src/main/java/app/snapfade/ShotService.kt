@@ -11,7 +11,6 @@ import android.content.Intent
 import android.database.ContentObserver
 import android.graphics.PixelFormat
 import android.net.Uri
-import android.os.Environment
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
@@ -81,7 +80,7 @@ class ShotService : Service() {
     }
 
     private fun onMediaChanged() {
-        if (!Environment.isExternalStorageManager()) return // need All files access to delete
+        if (!Shots.hasMediaAccess(this)) return // could not delete it from the gallery anyway
         val since = System.currentTimeMillis() / 1000 - 20
         contentResolver.query(
             images,
@@ -103,7 +102,7 @@ class ShotService : Service() {
         Shots.sweep(this)
         val file = File(Shots.dir(this), name)
         contentResolver.openInputStream(src)?.use { i -> file.outputStream().use { i.copyTo(it) } } ?: return
-        contentResolver.delete(src, null, null)
+        Shots.deleteFromGallery(this, src)
         Shots.copyToClipboard(this, file)
         Shots.scheduleExpiry(this, file)
         showOverlay(file)

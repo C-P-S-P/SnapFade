@@ -8,7 +8,6 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.os.FileObserver
 import android.os.Handler
 import android.os.Looper
@@ -27,6 +26,7 @@ import java.io.File
 class MainActivity : Activity() {
 
     private val handler = Handler(Looper.getMainLooper())
+    private var askedPhotos = false
     private val tick = object : Runnable {
         override fun run() { refresh(); handler.postDelayed(this, 60_000) }
     }
@@ -58,6 +58,20 @@ class MainActivity : Activity() {
         }
         findViewById<View>(R.id.files).setOnClickListener {
             startActivity(Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, Uri.parse("package:$packageName")))
+        }
+        findViewById<View>(R.id.photos).setOnClickListener {
+            // "Don't allow" twice (or "Select photos" on 14+) leaves only the app's settings page
+            if (askedPhotos && !shouldShowRequestPermissionRationale(Shots.readPermission)) {
+                startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
+            } else {
+                askedPhotos = true
+                requestPermissions(arrayOf(Shots.readPermission), 1)
+            }
+        }
+        findViewById<View>(R.id.media).setOnClickListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                startActivity(Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA, Uri.parse("package:$packageName")))
+            }
         }
         findViewById<ListView>(R.id.list).setOnItemClickListener { parent, _, pos, _ ->
             Shots.copyToClipboard(this, parent.getItemAtPosition(pos) as File)
@@ -91,7 +105,7 @@ class MainActivity : Activity() {
     private fun refresh() {
         val running = ShotService.running
         val overlay = Settings.canDrawOverlays(this)
-        val files = Environment.isExternalStorageManager()
+        val files = Shots.hasMediaAccess(this)
         val ready = running && files
 
         findViewById<TextView>(R.id.status).setText(if (ready) R.string.status_ready else R.string.status_setup)
@@ -105,7 +119,12 @@ class MainActivity : Activity() {
         findViewById<View>(R.id.enable).visibility = if (running) View.GONE else View.VISIBLE
         findViewById<View>(R.id.disable).visibility = if (running) View.VISIBLE else View.GONE
         findViewById<View>(R.id.overlay).visibility = if (overlay) View.GONE else View.VISIBLE
-        findViewById<View>(R.id.files).visibility = if (files) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.files).visibility =
+            if (Shots.legacyStorage && !files) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.photos).visibility =
+            if (!Shots.legacyStorage && !Shots.canRead(this)) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.media).visibility =
+            if (!Shots.legacyStorage && !Shots.canManageMedia(this)) View.VISIBLE else View.GONE
 
         Shots.sweep(this)
         val shots = Shots.all(this)

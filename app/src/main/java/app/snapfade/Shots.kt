@@ -1,15 +1,19 @@
 package app.snapfade
 
+import android.Manifest
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.provider.MediaStore
 import android.provider.MediaStore.Images.Media
 import android.provider.MediaStore.VOLUME_EXTERNAL_PRIMARY
+import android.provider.Settings
 import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.core.content.FileProvider
@@ -40,6 +44,36 @@ object Shots {
     fun isEnabled(ctx: Context): Boolean = prefs(ctx).getBoolean(KEY_ENABLED, false)
 
     fun setEnabled(ctx: Context, on: Boolean) = prefs(ctx).edit().putBoolean(KEY_ENABLED, on).apply()
+
+    /** Android 11 has no MANAGE_MEDIA, so there All files access is still the only dialog-free delete. */
+    val legacyStorage = Build.VERSION.SDK_INT < Build.VERSION_CODES.S
+
+    val readPermission: String =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) Manifest.permission.READ_MEDIA_IMAGES
+        else Manifest.permission.READ_EXTERNAL_STORAGE
+
+    fun canRead(ctx: Context): Boolean =
+        ctx.checkSelfPermission(readPermission) == PackageManager.PERMISSION_GRANTED
+
+    fun canManageMedia(ctx: Context): Boolean = !legacyStorage && MediaStore.canManageMedia(ctx)
+
+    /**
+     * Everything needed to see a new screenshot and delete it from the gallery without a prompt.
+     * On Android 12+ the delete goes through an Activity started from the background, which the
+     * system only allows while the app holds the overlay permission; without it the shot would
+     * stay in the gallery, so the overlay step is required there rather than optional.
+     */
+    fun hasMediaAccess(ctx: Context): Boolean =
+        if (legacyStorage) Environment.isExternalStorageManager()
+        else canRead(ctx) && canManageMedia(ctx) && Settings.canDrawOverlays(ctx)
+
+    /**
+     * MANAGE_MEDIA does not allow a plain delete(); it only drops the confirmation dialog from
+     * createDeleteRequest, which must still be launched for a result from an Activity.
+     */
+    fun deleteFromGallery(ctx: Context, uri: Uri) {
+        if (legacyStorage) ctx.contentResolver.delete(uri, null, null) else DeleteActivity.start(ctx, uri)
+    }
 
     fun dir(ctx: Context): File = File(ctx.cacheDir, "shots").apply { mkdirs() }
 

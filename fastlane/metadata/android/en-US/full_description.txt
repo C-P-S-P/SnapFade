@@ -12,8 +12,8 @@ Take a screenshot the normal way. SnapFade moves it out of your gallery into its
 
 <b>Permissions</b>
 <ul>
-<li>All files access: to delete the original from the gallery without a prompt each time.</li>
-<li>Display over other apps: for the Save / Share popup. Optional.</li>
+<li>Photo access and media management (Android 12+): to see new screenshots and delete them from the gallery without a prompt each time. On Android 11 this is the single All files access permission.</li>
+<li>Display over other apps: for the Save / Share popup, and on Android 12+ also needed to remove the screenshot from the gallery in the background.</li>
 <li>A quiet foreground service keeps it running; its notification is silent and minimised.</li>
 </ul>
 
