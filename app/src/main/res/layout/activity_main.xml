@@ -50,6 +50,16 @@
             android:text="@string/open_files" />
 
         <Button
+            android:id="@+id/photos"
+            style="@style/Btn.Outline"
+            android:text="@string/allow_photos" />
+
+        <Button
+            android:id="@+id/media"
+            style="@style/Btn.Outline"
+            android:text="@string/allow_media" />
+
+        <Button
             android:id="@+id/disable"
             style="@style/Btn.Small"
             android:layout_marginTop="16dp"

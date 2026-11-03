@@ -9,6 +9,8 @@
     <string name="turn_off">Turn off</string>
     <string name="allow_overlay">Allow display over other apps</string>
     <string name="open_files">Allow all files access</string>
+    <string name="allow_photos">Allow photo access</string>
+    <string name="allow_media">Allow media management</string>
     <string name="notif_channel">Background service</string>
     <string name="notif_text">Running</string>
     <string name="copied">Copied to clipboard</string>
